@@ -1,18 +1,20 @@
 ## The House Always Wins: House Effects in Polling
 
-**Preliminary Release**
-
 ![rasmussen vs. rest bush approval](figs/approve_rasmussen.png)
 
 ![rasmussen vs. rest election](figs/mccain_rasmussen.png)
 
 ### Data
 
+**Preliminary Release**
+
 * [G. W. Bush Approval Ratings](data/bushfav_merged.csv)
     - From PollingReport.com among other other places.
 * [2008 Elections Polling Data via Pollster](data/collapsed polls_pollster.csv)
 
 ### Scripts
+
+**Preliminary Release**
 
 * [Rasmussen Vs. Rest](scripts/rasmussen_vs_all.R)
 
