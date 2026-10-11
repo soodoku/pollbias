@@ -1,0 +1,2 @@
+cutoff,n_train,n_holdout,prediction_draws,unsupported_geography_polls,existing_period_polls,rmse,mae,mean_interval_width_95,predictive_coverage_95
+2006-10-22,1308,323,4000,0,4,23.538480873867698,22.02048365593608,51.634803325259135,0.8452012383900929

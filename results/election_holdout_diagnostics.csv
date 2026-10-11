@@ -1,0 +1,2 @@
+min_bfmi,divergences,treedepth_hits,max_rhat,house_max_rhat,house_min_bulk_ess,house_min_tail_ess,passed,fit_file
+0.6158681245917569,0,0,1.0076035858829258,1.0063129738397443,2317.0225411831116,2078.5320308698565,TRUE,cache/election_holdout.rds

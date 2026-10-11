@@ -1,0 +1,5 @@
+source("scripts/common.R")
+source("R/models.R")
+source("R/benchmark.R")
+project_root <- normalizePath(".")
+testthat::test_dir("tests/testthat", stop_on_failure = TRUE, env = globalenv())

@@ -1,0 +1,2 @@
+min_bfmi,divergences,treedepth_hits,max_rhat,house_max_rhat,house_min_bulk_ess,house_min_tail_ess,passed
+0.8155367984999397,0,0,1.0060158709655043,1.0025288604942604,4462.006666744495,2797.394044806917,TRUE

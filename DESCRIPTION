@@ -1,0 +1,31 @@
+Package: pollbias
+Title: Relative House Effects in Historical US Polling
+Version: 0.1.0
+Authors@R: person("Gaurav", "Sood", role = c("aut", "cre"))
+Description: A reproducible analysis project estimating relative polling house
+    effects in Bush approval and 2008 presidential election polls.
+License: CC BY 2.0
+URL: https://github.com/soodoku/pollbias
+BugReports: https://github.com/soodoku/pollbias/issues
+Encoding: UTF-8
+Depends: R (>= 4.6.0)
+Imports:
+    bayesplot,
+    brms,
+    cmdstanr,
+    digest,
+    dplyr,
+    ggplot2,
+    jsonlite,
+    knitr,
+    lintr,
+    mvtnorm,
+    posterior,
+    readr,
+    renv,
+    rmarkdown,
+    stringr,
+    styler,
+    testthat,
+    tibble,
+    tidyr

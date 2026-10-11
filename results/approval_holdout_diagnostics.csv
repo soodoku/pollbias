@@ -1,0 +1,2 @@
+min_bfmi,divergences,treedepth_hits,max_rhat,house_max_rhat,house_min_bulk_ess,house_min_tail_ess,passed,fit_file
+0.8379652748560025,0,0,1.0033848888197656,1.0033032489675795,3892.413630420264,2673.4081208782163,TRUE,cache/approval_holdout.rds

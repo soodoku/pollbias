@@ -1,0 +1,32 @@
+name: R analysis
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Test analysis and published artifacts in Rocker
+        run: make ci-docker
+  bayesian-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.6.0'
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::brms, stan-dev/cmdstanr@55342f4f6c9300f9a47046f107b4db9b5e468aa6
+      - name: Install CmdStan
+        run: Rscript -e 'cmdstanr::install_cmdstan(cores = 2, version = "2.40.0")'
+      - name: Verify marginalized likelihood
+        run: Rscript scripts/check-likelihood.R
+      - name: Recover simulated house effects
+        run: Rscript scripts/simulate.R smoke

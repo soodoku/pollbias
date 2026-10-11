@@ -1,0 +1,9 @@
+window_days,block_comparison,pairs,correlation
+7,between fortnights,151,0.40630919306238117
+7,within fortnight,256,0.41248351182128173
+14,between fortnights,312,0.3393201705402717
+14,within fortnight,275,0.40121822236290783
+30,between fortnights,795,0.13234853601800456
+30,within fortnight,275,0.40121822236290783
+60,between fortnights,1202,0.09878897989163474
+60,within fortnight,275,0.40121822236290783

@@ -1,0 +1,187 @@
+---
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+summary <- readr::read_csv("results/data_summary.csv", show_col_types = FALSE)
+approval <- readr::read_csv("results/approval_estimates.csv", show_col_types = FALSE)
+election <- readr::read_csv("results/election_estimates.csv", show_col_types = FALSE)
+runtime <- jsonlite::read_json("results/approval_runtime.json")
+approval_holdout <- readr::read_csv("results/approval_holdout.csv", show_col_types = FALSE)
+weighted_approval <- readr::read_csv("results/approval_sensitivity.csv", show_col_types = FALSE) |>
+  dplyr::filter(house == "Rasmussen", specification == "sample_size")
+rasmussen_approval <- readr::read_csv("results/polls.csv", show_col_types = FALSE) |>
+  dplyr::filter(dataset == "approval", house == "Rasmussen", is.na(exclusion))
+format_effect <- function(x) {
+  sprintf("%+.1f pp (95%% credible interval %+.1f to %+.1f)", x$estimate, x$lower, x$upper)
+}
+house_table <- function(x) {
+  x |>
+    dplyr::filter(reference) |>
+    dplyr::arrange(house) |>
+    dplyr::transmute(
+      House = house, `Effect (pp)` = round(estimate, 1),
+      `95% interval` = sprintf("%.1f to %.1f", lower, upper),
+      Polls = n_polls, Support = support
+    ) |>
+    knitr::kable()
+}
+```
+
+# The House Always Wins: House Effects in Polling
+
+How much do polling organizations differ when measuring the same political
+outcome at comparable times and places? This project estimates **relative house
+effects** from historical Bush approval polls and 2008 presidential election
+polls. The estimates describe these datasets and periods, not the current
+performance of polling organizations.
+
+Rasmussen's estimated Bush-approval house effect is
+**`r format_effect(dplyr::filter(approval, house == "Rasmussen"))`**.
+Its estimated effect on the McCain-minus-Obama margin is
+**`r format_effect(dplyr::filter(election, house == "Rasmussen"))`**.
+The reference in each analysis is the equal-weight average of houses with at
+least ten usable polls in at least three calendar months. Positive values mean
+higher Bush approval or a more Republican election margin than that reference.
+
+These are differences from other pollsters, not errors against known public
+opinion. Polling consensus can itself be wrong. A house effect includes the
+organization's population screens and other practices; it does not identify
+their individual contributions or establish intentional bias.
+
+Results can depend on sample availability and modeling choices. Rasmussen's
+sample-size-weighted approval estimate is
+**`r format_effect(weighted_approval)`**, retaining only
+`r sum(!is.na(rasmussen_approval$sample_size))` of its
+`r nrow(rasmussen_approval)` usable polls. This sensitivity changes both the
+sample and the error model, so it cannot isolate the effect of weighting.
+
+## Bush approval
+
+The analysis uses `r summary$usable_polls[summary$dataset == "approval"]` polls,
+covering `r summary$first_date[summary$dataset == "approval"]` through
+`r summary$last_date[summary$dataset == "approval"]`.
+
+![Bush approval house effects](figs/approval_houses.png)
+
+```{r approval-table, results='asis'}
+house_table(approval)
+```
+
+## 2008 presidential election
+
+The analysis uses `r summary$usable_polls[summary$dataset == "election"]` polls,
+covering `r summary$first_date[summary$dataset == "election"]` through
+`r summary$last_date[summary$dataset == "election"]`. National polls and state
+polls have separate geographic levels and trends. The outcome is McCain support
+minus Obama support, without renormalizing away other candidates or undecided
+respondents. A two-point effect on this margin is not a two-point effect on one
+candidate's vote share.
+
+![Election house effects](figs/election_houses.png)
+
+```{r election-table, results='asis'}
+house_table(election)
+```
+
+The tables show houses meeting the reference coverage rule, without filtering
+on statistical significance. The complete [approval estimates](results/approval_estimates.csv)
+and [election estimates](results/election_estimates.csv) include sparse houses,
+their intervals, coverage dates, and overlap measures. In the CSVs, `estimate`
+and `sd` are the posterior mean and standard deviation; `lower` and `upper`
+are the 95% interval bounds. Sparse estimates depend
+more heavily on partial pooling. Intervals are marginal credible intervals,
+not simultaneous guarantees for all houses or a ranking of accuracy.
+
+## Model and checks
+
+| Model | Role | Main tradeoff |
+|---|---|---|
+| House and geography-month fixed effects | Descriptive benchmark | Transparent within-cell comparisons; sparse or disconnected houses are poorly identified |
+| Bayesian Student-t model | Published estimates | Partial pooling and joint uncertainty; depends on time, geography, and dependence assumptions |
+| Gaussian model with approximate sampling variances | Sensitivity analysis | Uses reported sample sizes; excludes missing sizes and assumes unobserved design effects away |
+
+Separate Bayesian Student-t models combine partially pooled house intercepts,
+smooth time trends, and correlated errors within each house and fortnight.
+Approval includes an explicit September 11, 2001 break so the trend does not
+spread the abrupt change into earlier polls. Election models also
+include geography intercepts and partially pooled cubic spline deviations by
+geography. The model uses reported percentage-point outcomes, not invented
+respondent-level counts. Missing sample sizes therefore do not remove polls
+from the primary analysis.
+
+House effects are constant within each historical dataset. Differences in
+question wording, survey mode, sponsorship, and populations may remain inside
+these estimates. Time trends approximate opinion over fieldwork using its
+midpoint. Within-fortnight correlation addresses some dependence but cannot recover
+unobserved respondent overlap. Limited comparison support is measured using
+shared geography-month cells and explicitly flagged.
+
+The [model report](docs/audit.md) documents data handling,
+fixed-effects benchmarks, sample-size and screen adjustments, alternate time
+trends, four-week dependence blocks, nonoverlapping fieldwork samples, influential-house exclusions,
+posterior predictive checks, and simulated-data recovery. National-only and
+McCain-support analyses are also provided. These are sensitivity analyses of
+historical relative effects, not election forecasts.
+
+Forward prediction is poor for approval: training through
+`r approval_holdout$cutoff` gives `r round(approval_holdout$rmse, 1)`-point RMSE
+on the later polls, with `r round(100 * approval_holdout$predictive_coverage_95, 1)`%
+coverage from nominal 95% predictive intervals. These are retrospective
+adjustment models; the approval model should not be used to forecast opinion.
+
+## Reproduce
+
+Use R 4.6 or newer, a working C++ toolchain, Make, and Pandoc. The recorded run uses
+R `r runtime$r_version`, `brms` `r runtime$packages$brms`, and CmdStan
+`r runtime$cmdstan`. Dependency versions are recorded in `renv.lock`.
+
+```sh
+make setup
+make all
+```
+
+`make setup` restores R packages into `.r-library` and installs CmdStan 2.40.0
+into the ignored project cache. An explicit `CMDSTAN` environment variable can
+select another installation. Full Bayesian fits and sensitivity runs can take
+many hours; cached fits are reused when their data and statistical model
+match. To change sampling controls, iteration counts, or software versions for an existing fit,
+remove its named `.rds` file from `cache/` before refitting.
+
+```sh
+make test
+make lint
+make ci-docker
+make render
+```
+
+`make ci-docker` runs tests, lint, and published-artifact checks in the standard
+`rocker/verse:4.6.0` image. The GitHub workflow additionally fits a simulated
+Bayesian model. `make render` rebuilds this README and the audit report from
+saved results; analytical numbers are not maintained by hand. Fits are cached
+during estimation and can be deleted after the reports and checks finish.
+CSV estimates, generated Stan programs, diagnostics, and session information
+are committed in `results/`.
+
+## Data
+
+These data were collected in 2007–2008 to examine house effects and differences
+in polling practices. The original sources included PollingReport.com and
+Pollster.com. This repository retains the original
+[Bush approval data](data/bushfav_merged.csv) and
+[election data](data/collapsed%20polls_pollster.csv).
+
+The cleaned [poll-level data](results/polls.csv) retain source rows and flag
+observations excluded from estimation.
+The election CSV has two source columns named `n`; the importer preserves both
+under distinct names and checks their agreement. Unverified dates are excluded
+rather than silently repaired. The audit explains what can and cannot be
+verified from these historical files.
+
+The original descriptive figures remain in `figs/approve_rasmussen.png` and
+`figs/mccain_rasmussen.png`; they are not the adjusted house-effect estimates.
+
+Released under [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/).
+Corrections and additional source documentation are welcome through issues or
+pull requests.

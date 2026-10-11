@@ -1,0 +1,12 @@
+.r-library/
+.Rhistory
+.RData
+.Rproj.user/
+renv/library/
+renv/staging/
+renv/cache/
+cache/
+output/
+*.Rcheck/
+.DS_Store
+README.html
